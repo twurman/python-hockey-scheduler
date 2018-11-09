@@ -73,13 +73,21 @@ def parse_text(text):
 	lines = text.split('\n')
 	if len(lines) != 4:
 		return {}
-	#TODO: fix daylight savings time
+	# account for daylight savings time
+	dt = dateparser.parse(lines[2][0:11] + ' ' + lines[2][11:])
+	dst_start = datetime.datetime(dt.year, 3, 8, 2, 0)
+	dst_start += datetime.timedelta(6 - dst_start.weekday())
+	dst_end = datetime.datetime(dt.year, 11, 1, 2, 0)
+	dst_end += datetime.timedelta(6 - dst_end.weekday())
+	suffix = ' CST'
+	if dst_start <= dt < dst_end:
+		suffix = ' CDT'
 	game = {
 		'home': lines[0],
 		'away': lines[1],
 		# parse the date and time from line 3, which is mashed together, but should always be 11 characters ex. Sun, May 07 or Sun, Apr 30
-		'startTime': dateparser.parse(lines[2][0:11] + ' ' + lines[2][11:] + ' CDT'), # watch out for that daylight savings time
-		'endTime': dateparser.parse(lines[2][0:11] + ' ' + lines[2][11:] + ' CDT') + timedelta(hours=1), # watch out for that daylight savings time
+		'startTime': dateparser.parse(lines[2][0:11] + ' ' + lines[2][11:] + suffix),
+		'endTime': dateparser.parse(lines[2][0:11] + ' ' + lines[2][11:] + suffix) + timedelta(hours=1),
 		'rink': lines[3].replace('JIH West', 'Johnny\'s IceHouse - West').replace('JIH East', 'Johnny\'s Ice House - East')
 	}
 	return game
